@@ -1,0 +1,1 @@
+IP for RabbitMQ Machine 100.110.65.121\n Port: 5672\n Request Queue: request_queue\n Response Queue: response_queue
