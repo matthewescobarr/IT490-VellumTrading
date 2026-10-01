@@ -2,8 +2,8 @@ import pika
 import json
 
 RABBITMQ_HOST = "100.110.65.121"
-RABBITMQ_USER = "jamessass"
-RABBITMQ_PASSWORD = "Summerroxie1469!"
+RABBITMQ_USER = "it490"
+RABBITMQ_PASSWORD = "admin1234!"
 
 credentials = pika.PlainCredentials(
 	RABBITMQ_USER,
