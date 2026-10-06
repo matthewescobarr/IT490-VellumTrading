@@ -32,5 +32,5 @@ if (loginForm) {
         console.log("Password:", password);
 
     });
-}
 
+}

@@ -28,3 +28,24 @@
     </body>
     
 </html>
+
+<form id="tradeForm">
+
+    <label for="symbol">Stock Symbol</label>
+    <input type="text" id="symbol" required>
+
+    <label for="quantity">Quantity</label>
+    <input type="number" id="quantity" min="1" required>
+
+    <label for="action">Action</label>
+    <select id="action">
+        <option value="buy">Buy</option>
+        <option value="sell">Sell</option>
+    </select>
+
+    <button type="submit">Trade</button>
+</form>
+
+<p id="tradeMessage"></p>
+
+    
