@@ -14,15 +14,15 @@ if ($mydb->errno != 0) {
 
 echo "Successfully connected to vellum_trading" . PHP_EOL;
 
-function doRegister($username,$password)
+function doRegister($email,$password)
 {
-    // lookup username in databas
+    // lookup username in database
     // check password
     global $mydb;
 
-    $query = "SELECT user_id FROM users WHERE username = ?";
+    $query = "SELECT user_id FROM users WHERE email = ?";
     $stmt = $mydb->prepare($query);
-    $stmt->bind_param("s", $username);
+    $stmt->bind_param("s", $email);
     $stmt->execute();
 
     $result = $stmt->get_result();
@@ -32,9 +32,9 @@ function doRegister($username,$password)
 
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
-    $query = "INSERT INTO users (username, password_hash) VALUES (?, ?)";
+    $query = "INSERT INTO users (email, password_hash) VALUES (?, ?)";
     $stmt = $mydb->prepare($query);
-    $stmt->bind_param("ss", $username, $password_hash);
+    $stmt->bind_param("ss", $email, $password_hash);
     $stmt->execute();
     
     //return false if not valid
@@ -57,7 +57,7 @@ function doLogin($username,$password)
 function requestProcessor($request)
 {
   echo "received request".PHP_EOL;
-  var_dump($request);
+  //var_dump($request);
   if(!isset($request['type']))
   {
     return "ERROR: unsupported message type";
@@ -65,11 +65,11 @@ function requestProcessor($request)
   switch ($request['type'])
   {
     case "register":
-      return doRegister($request['username'],$request['password']);
+      return doRegister($request['email'],$request['password']);
     case "login":
-      return doLogin($request['username'],$request['password']);
+      return doLogin($request['email'],$request['password']);
     case "validate_session":
-      return doValidategit ($request['sessionId']);
+      return doValidate($request['sessionId']);
   }
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }
