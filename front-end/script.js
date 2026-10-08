@@ -1,35 +1,84 @@
 const registerForm = document.getElementById("registerForm");
 
 if (registerForm) {
-    registerForm.addEventListener("submit", function(event) { //when form submitted --> run this code (below)
-        event.preventDefault();
 
+    registerForm.addEventListener("submit", function(event) {
+
+        // when form is submitted, run this code
+        event.preventDefault();
 
         const name = document.getElementById("name").value;
         const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value; //.value means give me whatever the user typed into the box
+        const password = document.getElementById("password").value;
         const confirmPassword = document.getElementById("confirmPassword").value;
 
-        console.log("Name:", name);
-        console.log("Email:", email);
-        console.log("Password:", password);
-        console.log("Confirm Password", confirmPassword);
+        // Check that the passwords match
+        if (password !== confirmPassword) {
 
-    });
-}
+            document.getElementById("registerMessage").textContent =
+                "Passwords do not match. Please try again.";
 
+            return;
+        }
 
-const loginForm = document.getElementById("loginForm"); //find html element with ID loginForm and save as loginForm
+        // Data we are sending to the backend
+        const data = {
 
-if (loginForm) {
-    loginForm.addEventListener("submit", function(event) { //when form submitted --> run this code (below)
-        event.preventDefault();
+            name: name,
+            email: email,
+            password: password
 
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value; //.value means give me whatever the user typed into the box
+        };
 
-        console.log("Email:", email);
-        console.log("Password:", password);
+        // Send data to the backend
+        fetch("/register.php", {
+
+            method: "POST",
+
+            headers: {
+
+                "Content-Type": "application/json"
+
+            },
+
+            body: JSON.stringify(data)
+
+        })
+
+        // Receive the backend response
+        .then(function(response) {
+
+            return response.json();
+
+        })
+
+        // Use the backend response
+        .then(function(result) {
+
+            document.getElementById("registerMessage").textContent =
+                result.message;
+
+            if (result.success) {
+
+                console.log("Registration successful");
+
+            } else {
+
+                console.log("Registration failed");
+
+            }
+
+        })
+
+        // Handle connection errors
+        .catch(function(error) {
+
+            console.error("Error:", error);
+
+            document.getElementById("registerMessage").textContent =
+                "Could not connect to server.";
+
+        });
 
     });
 
