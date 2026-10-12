@@ -31,7 +31,7 @@ if (registerForm) {
         };
 
         // Send data to the backend
-        fetch("/register.php", {
+        fetch("http://100.110.65.121/register_handler.php", {
 
             method: "POST",
 
@@ -76,6 +76,81 @@ if (registerForm) {
             console.error("Error:", error);
 
             document.getElementById("registerMessage").textContent =
+                "Could not connect to server.";
+
+        });
+
+    });
+
+}
+
+const loginForm = document.getElementById("loginForm");
+
+if (loginForm) {
+
+    loginForm.addEventListener("submit", function(event) {
+
+        // when form is submitted, run this code
+        event.preventDefault();
+
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+
+        // Data we are sending to the backend
+        const data = {
+
+            email: email,
+            password: password
+
+        };
+
+        // Send data to the backend
+        fetch("http://100.110.65.121/login_handler.php", {
+
+            method: "POST",
+
+            headers: {
+
+                "Content-Type": "application/json"
+
+            },
+
+            body: JSON.stringify(data)
+
+        })
+
+        // Receive the backend response
+        .then(function(response) {
+
+            return response.json();
+
+        })
+
+        // Use the backend response
+        .then(function(result) {
+
+            document.getElementById("loginMessage").textContent =
+                result.message;
+
+            if (result.success) {
+
+                console.log("Login successful");
+
+            } else {
+
+                console.log("Login failed");
+
+            }
+
+        })
+
+        // Handle connection errors
+        .catch(function(error) {
+
+            console.error("Error:", error);
+
+            document.getElementById("loginMessage").textContent =
                 "Could not connect to server.";
 
         });
