@@ -1,3 +1,4 @@
+header('Content-Type: application/json; charset=UTF-8');
 const registerForm = document.getElementById("registerForm");
 
 if (registerForm) {
@@ -60,11 +61,11 @@ if (registerForm) {
 
             if (result.success) {
 
-                console.log("Registration successful");
+                console.log{"Registration successful"};
 
             } else {
 
-                console.log("Registration failed");
+                console.log{"Registration failed"};
 
             }
 
@@ -72,7 +73,6 @@ if (registerForm) {
 
         // Handle connection errors
         .catch(function(error) {
-
             console.error("Error:", error);
 
             document.getElementById("registerMessage").textContent =
@@ -95,6 +95,7 @@ if (loginForm) {
 
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
+        const loginMessage = document.getElementById("loginMessage");
 
 
         // Data we are sending to the backend
@@ -136,8 +137,11 @@ if (loginForm) {
             if (result.success) {
 
                 console.log("Login successful");
+                window.location.href = "dashboard.php";
+            }
 
-            } else {
+
+            else {
 
                 console.log("Login failed");
 
