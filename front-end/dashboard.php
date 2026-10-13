@@ -1,3 +1,7 @@
+<?php
+require_once 'authCheck.php';
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 

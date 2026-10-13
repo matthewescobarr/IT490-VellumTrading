@@ -1,184 +1,249 @@
-// ==========================================
-// REGISTRATION
-// ==========================================
+document.addEventListener("DOMContentLoaded", function () {
 
-const registerForm = document.getElementById("registerForm");
+    // ==========================================
+    // LOGIN FORM
+    // ==========================================
 
-if (registerForm) {
-    registerForm.addEventListener("submit", function (event) {
+    const loginForm = document.getElementById("loginForm");
 
-        // Prevent the page from reloading
-        event.preventDefault();
+    if (loginForm) {
+        loginForm.addEventListener("submit", function (event) {
+            event.preventDefault();
 
-        // Get the values entered in the form
-        const name = document.getElementById("name").value.trim();
-        const email = document.getElementById("email").value.trim();
-        const password = document.getElementById("password").value;
-        const confirmPassword = document.getElementById("confirmPassword").value;
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+            const loginMessage = document.getElementById("loginMessage");
 
-        const registerMessage = document.getElementById("registerMessage");
-
-        // Check that the passwords match
-        if (password !== confirmPassword) {
-            registerMessage.textContent =
-                "Passwords do not match. Please try again.";
-            return;
-        }
-
-        // Check that the fields are not empty
-        if (!name || !email || !password) {
-            registerMessage.textContent =
-                "Please fill in all required fields.";
-            return;
-        }
-
-        // Prepare the data to send to the backend
-        const data = {
-            name: name,
-            email: email,
-            password: password
-        };
-
-        // Send the registration request to James's backend
-        fetch("http://100.110.65.121/register_handler.php", {
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify(data)
-        })
-
-        // Check the server response
-        .then(function (response) {
-
-            if (!response.ok) {
-                throw new Error("HTTP error: " + response.status);
+            // Clear previous messages
+            if (loginMessage) {
+                loginMessage.textContent = "";
             }
 
-            return response.json();
-
-        })
-
-        // Process the backend response
-        .then(function (result) {
-
-            registerMessage.textContent =
-                result.message || "User already has an account. Please log in.";
-
-            if (result.success) {
-
-                console.log("Registration successful");
-
-                // Send the user to the login page
-                window.location.href = "login.php";
-
-            } else {
-
-                console.log("Registration failed");
-
+            // Validate input
+            if (!email || !password) {
+                if (loginMessage) {
+                    loginMessage.textContent =
+                        "Please enter your email and password.";
+                }
+                return;
             }
 
-        })
+            // Send login information to the backend
+            fetch("http://100.110.65.121/login_handler.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            })
 
-        // Handle connection or response errors
-        .catch(function (error) {
+            .then(function (response) {
+                return response.text().then(function (text) {
+                    let result;
 
-            console.error("Registration error:", error);
+                    try {
+                        result = JSON.parse(text);
+                    } catch (error) {
+                        console.error("Invalid login response:", text);
+                        throw new Error(
+                            "The server returned an invalid response."
+                        );
+                    }
 
-            registerMessage.textContent =
-                "Could not connect to the registration server. Please try again.";
+                    if (!response.ok) {
+                        throw new Error(
+                            result.message || "The login request failed."
+                        );
+                    }
 
+                    return result;
+                });
+            })
+
+            .then(function (result) {
+
+                // Check whether login succeeded
+                if (result.success && result.sessionKey) {
+
+                    // Send the session key to the PHP session handler
+                    return fetch("setSession.php", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            sessionKey: result.sessionKey
+                        })
+                    });
+                }
+
+                throw new Error(
+                    result.message || "Login failed. Check your credentials."
+                );
+            })
+
+            .then(function (response) {
+                return response.text().then(function (text) {
+                    let sessionResult;
+
+                    try {
+                        sessionResult = JSON.parse(text);
+                    } catch (error) {
+                        console.error("Invalid session response:", text);
+                        throw new Error(
+                            "The session server returned an invalid response."
+                        );
+                    }
+
+                    if (!response.ok || !sessionResult.success) {
+                        throw new Error(
+                            sessionResult.message ||
+                            "Could not establish your session."
+                        );
+                    }
+
+                    return sessionResult;
+                });
+            })
+
+            .then(function () {
+                // Redirect after the session is established
+                window.location.href = "index.php";
+            })
+
+            .catch(function (error) {
+                console.error("Login error:", error);
+
+                if (loginMessage) {
+                    loginMessage.textContent =
+                        error.message || "Unable to log in. Please try again.";
+                }
+            });
         });
-
-    });
-}
+    }
 
 
-// ==========================================
-// LOGIN
-// ==========================================
+    // ==========================================
+    // REGISTRATION FORM
+    // ==========================================
 
-const loginForm = document.getElementById("loginForm");
+    const registerForm = document.getElementById("registerForm");
 
-if (loginForm) {
-    loginForm.addEventListener("submit", function (event) {
+    if (registerForm) {
+        registerForm.addEventListener("submit", function (event) {
+            event.preventDefault();
 
-        // Prevent the page from reloading
-        event.preventDefault();
+            const name = document.getElementById("name").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
 
-        // Get the values entered in the form
-        const email = document.getElementById("email").value.trim();
-        const password = document.getElementById("password").value;
+            // Keep this spelling if your HTML uses "confrimPassword"
+            const confirmPassword =
+                document.getElementById("confrimPassword").value;
 
-        const loginMessage = document.getElementById("loginMessage");
+            const registerMessage =
+                document.getElementById("registerMessage");
 
-        // Check that the fields are not empty
-        if (!email || !password) {
-            loginMessage.textContent =
-                "Please enter your email and password.";
-            return;
-        }
-
-        // Prepare the data to send to the backend
-        const data = {
-            email: email,
-            password: password
-        };
-
-        // Send the login request to James's backend
-        fetch("http://100.110.65.121/login_handler.php", {
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify(data)
-        })
-
-        // Check the server response
-        .then(function (response) {
-
-            if (!response.ok) {
-                throw new Error("HTTP error: " + response.status);
+            // Clear previous messages
+            if (registerMessage) {
+                registerMessage.textContent = "";
             }
 
-            return response.json();
-
-        })
-
-        // Process the backend response
-        .then(function (result) {
-
-            //loginMessage.textContent =
-                //result.message || "Login request completed.";
-
-            if (result.success) {
-
-                console.log("Login successful");
-
-                // Redirect to the dashboard
-                window.location.href = "dashboard.php";
-
-            } else {
-
-                console.log("Login failed");
-
+            // Validate input
+            if (!name || !email || !password || !confirmPassword) {
+                if (registerMessage) {
+                    registerMessage.textContent =
+                        "Please complete all fields.";
+                }
+                return;
             }
 
-        })
+            // Ensure passwords match
+            if (password !== confirmPassword) {
+                if (registerMessage) {
+                    registerMessage.textContent =
+                        "Passwords do not match.";
+                }
+                return;
+            }
 
-        // Handle connection or response errors
-        .catch(function (error) {
+            // Send registration information to the backend
+            fetch("http://100.110.65.121/register_handler.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    name: name,
+                    email: email,
+                    password: password
+                })
+            })
 
-            console.error("Login error:", error);
+            .then(function (response) {
+                return response.text().then(function (text) {
+                    let result;
 
-            loginMessage.textContent =
-                "Could not connect to the login server. Please try again.";
+                    try {
+                        result = JSON.parse(text);
+                    } catch (error) {
+                        console.error(
+                            "Invalid registration response:",
+                            text
+                        );
 
+                        throw new Error(
+                            "The server returned an invalid response."
+                        );
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(
+                            result.message ||
+                            "The registration request failed."
+                        );
+                    }
+
+                    return result;
+                });
+            })
+
+            .then(function (result) {
+
+                if (result.success) {
+
+                    if (registerMessage) {
+                        registerMessage.textContent =
+                            "Registration successful! Redirecting to login...";
+                    }
+
+                    // Redirect to login after successful registration
+                    setTimeout(function () {
+                        window.location.href = "login.php";
+                    }, 1500);
+
+                } else {
+                    if (registerMessage) {
+                        registerMessage.textContent =
+                            result.message ||
+                            "Registration failed. Please try again.";
+                    }
+                }
+            })
+
+            .catch(function (error) {
+                console.error("Registration error:", error);
+
+                if (registerMessage) {
+                    registerMessage.textContent =
+                        error.message ||
+                        "Unable to register. Please try again.";
+                }
+            });
         });
+    }
 
-    });
-}
+});

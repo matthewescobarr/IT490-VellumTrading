@@ -1,3 +1,7 @@
+<?php
+require_once 'authCheck.php';
+?>
+
 <form id="searchForm">
 
     <label for="stockSymbol">Search Stock</label>

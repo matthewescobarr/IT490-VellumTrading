@@ -1,3 +1,46 @@
+<?php
+session_start();
+
+if (empty($_SESSION['sessionKey'])) {
+    header("Location: login.php");
+    exit;
+}
+
+$sessionKey = $_SESSION['sessionKey'];
+
+$payload = json_encode([
+    "sessionKey" => $sessionKey
+]);
+
+$options = [
+    "http" => [
+        "method" => "POST",
+        "header" => "Content-Type: application/json\r\n",
+        "content" => $payload,
+        "timeout" => 3
+    ]
+];
+
+$context = stream_context_create($options);
+
+$response = @file_get_contents(
+    "http://100.110.65.121/validate_session_handler.php",
+    false,
+    $context
+);
+
+$result = $response ? json_decode($response, true) : null;
+
+if (!is_array($result) || ($result['valid'] ?? false) !== true) {
+    session_unset();
+    session_destroy();
+    header("Location: login.php");
+    exit;
+}
+?>
+
+
+
 <!DOCTYPE html>
 <html lang="en">
     
