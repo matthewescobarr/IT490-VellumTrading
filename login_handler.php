@@ -8,36 +8,45 @@ require_once('rabbitMQLib.inc');
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-if (!$data) {
-	echo json_encode([
-		"success" => false,
-		"message" => "Invalid request."
-	]);
-	exit;
+if (!is_array($data)) {
+    http_response_code(400);
+    echo json_encode([
+        "success" => false,
+        "message" => "Invalid request."
+    ]);
+    exit;
 }
 
-if (
-	empty($data['email']) ||
-	empty($data['password'])
-) {
-	echo json_encode([
-		"success" => false,
-		"message" => "Missing email or password"
-	]);
-	exit;
+if (empty($data['email']) || empty($data['password'])) {
+    http_response_code(400);
+    echo json_encode([
+        "success" => false,
+        "message" => "Missing email or password."
+    ]);
+    exit;
 }
 
-$request = array();
-
-$request['type'] = 'login';
-$request['email'] = $data['email'];
-$request['password'] = $data['password'];
+$request = [
+    "type" => "login",
+    "email" => $data['email'],
+    "password" => $data['password']
+];
 
 $client = new rabbitMQClient("testRabbitMQ.ini", "testServer");
-
 $response = $client->send_request($request);
 
-echo json_encode($reponse);
+if (is_string($response) && trim($response) !== '') {
+    echo json_encode([
+        "success" => true,
+        "sessionKey" => $response
+    ]);
+} else {
+    http_response_code(401);
+    echo json_encode([
+        "success" => false,
+        "message" => "Login failed. Invalid credentials."
+    ]);
+}
 
 ?>
 

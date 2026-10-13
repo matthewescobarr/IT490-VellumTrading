@@ -1,40 +1,129 @@
 #!/usr/bin/php
 <?php
+
 require_once('path.inc');
 require_once('get_host_info.inc');
 require_once('rabbitMQLib.inc');
 
-function doLogin($username,$password)
+function sendDatabaseRequest($request)
 {
-    // lookup username in databas
-    // check password
-    return true;
-    //return false if not valid
+    $client = new rabbitMQClient("testRabbitMQ.ini", "testServer");
+    return $client->send_request($request);
+}
+
+function doLogin($email, $password)
+{
+    $response = sendDatabaseRequest([
+        "type" => "login",
+        "email" => $email,
+        "password" => $password
+    ]);
+
+    // The database processor must return a non-empty session key
+    // after successful authentication.
+    if (is_string($response) && trim($response) !== '') {
+        return $response;
+    }
+
+    // If the database processor returns an array, accept its sessionKey.
+    if (is_array($response)
+        && ($response['success'] ?? false) === true
+        && !empty($response['sessionKey'])
+        && is_string($response['sessionKey'])) {
+        return $response['sessionKey'];
+    }
+
+    return false;
+}
+
+function doRegister($name, $email, $password)
+{
+    return sendDatabaseRequest([
+        "type" => "register",
+        "name" => $name,
+        "email" => $email,
+        "password" => $password
+    ]);
+}
+
+function doValidate($sessionId)
+{
+    if (!is_string($sessionId) || trim($sessionId) === '') {
+        return false;
+    }
+
+    $response = sendDatabaseRequest([
+        "type" => "validate_session",
+        "sessionId" => $sessionId
+    ]);
+
+    if ($response === true) {
+        return true;
+    }
+
+    if (is_array($response) && ($response['valid'] ?? false) === true) {
+        return true;
+    }
+
+    return false;
 }
 
 function requestProcessor($request)
 {
-  echo "received request".PHP_EOL;
-  var_dump($request);
-  if(!isset($request['type']))
-  {
-    return "ERROR: unsupported message type";
-  }
-  switch ($request['type'])
-  {
-    case "login":
-      return doLogin($request['username'],$request['password']);
-    case "validate_session":
-      return doValidate($request['sessionId']);
-  }
-  return array("returnCode" => '0', 'message'=>"Server received request and processed");
+    if (!is_array($request) || !isset($request['type'])) {
+        return [
+            "success" => false,
+            "message" => "Missing request type."
+        ];
+    }
+
+    switch ($request['type']) {
+        case "login":
+            if (empty($request['email']) || empty($request['password'])) {
+                return false;
+            }
+
+            return doLogin($request['email'], $request['password']);
+
+        case "register":
+            if (
+                empty($request['name']) ||
+                empty($request['email']) ||
+                empty($request['password'])
+            ) {
+                return [
+                    "success" => false,
+                    "message" => "Missing registration information."
+                ];
+            }
+
+            return doRegister(
+                $request['name'],
+                $request['email'],
+                $request['password']
+            );
+
+        case "validate_session":
+            if (empty($request['sessionId'])) {
+                return false;
+            }
+
+            return doValidate($request['sessionId']);
+
+        default:
+            return [
+                "success" => false,
+                "message" => "Unsupported request type."
+            ];
+    }
 }
 
-$server = new rabbitMQServer("testRabbitMQ.ini","testServer");
+$server = new rabbitMQServer("testRabbitMQ.ini", "testServer");
 
-echo "testRabbitMQServer BEGIN".PHP_EOL;
+echo "testRabbitMQServer BEGIN" . PHP_EOL;
 $server->process_requests('requestProcessor');
-echo "testRabbitMQServer END".PHP_EOL;
+echo "testRabbitMQServer END" . PHP_EOL;
+
 exit();
 ?>
 
