@@ -7,7 +7,7 @@ require_once('rabbitMQLib.inc');
 
 function sendDatabaseRequest($request)
 {
-    $client = new rabbitMQClient("testRabbitMQ.ini", "testServer");
+    $client = new rabbitMQClient("testRabbitMQ.ini", "database");
     return $client->send_request($request);
 }
 
