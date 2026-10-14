@@ -7,7 +7,7 @@ require_once 'authCheck.php';
 
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial scale=1.0">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <title>Vellum Trading - Portfolio</title>
 
@@ -24,7 +24,7 @@ require_once 'authCheck.php';
                 <a href="search.php">Search Stocks</a>
                 <a href="portfolio.php">Portfolio</a>
                 <a href="transactions.php">Transactions</a>
-                <a href="login.php">Logout</a>
+                <a href="logout.php">Logout</a>
             </div>
 
         </nav>
@@ -35,7 +35,8 @@ require_once 'authCheck.php';
 
             <section>
                 <h2>Portfolio Value</h2>
-                <p>$10,000.00</p> //placeholder value
+                <p>$10,000.00</p> 
+                <!-- Placeholder value; replace with actual portfolio data. -->
             </section>
 
             <section>

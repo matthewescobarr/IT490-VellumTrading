@@ -26,7 +26,7 @@ require_once 'authCheck.php';
                 <a href="search.php">Search Stocks</a>
                 <a href="portfolio.php">Portfolio</a>
                 <a href="transactions.php">Transactions</a>
-                <a href="login.php">Logout</a>
+                <a href="logout.php">Logout</a>
             </div>
 
         </nav>

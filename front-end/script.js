@@ -28,6 +28,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
+
+            //TROUBLESHOOTING
+            console.log("Sending login request to backend...");
             // Send login information to the backend
             fetch("http://100.110.65.121/login_handler.php", {
                 method: "POST",
@@ -49,7 +52,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     } catch (error) {
                         console.error("Invalid login response:", text);
                         throw new Error(
-                            "The server returned an invalid response."
+                            "The server returned an invalid login response."
                         );
                     }
 
@@ -66,23 +69,27 @@ document.addEventListener("DOMContentLoaded", function () {
             .then(function (result) {
 
                 // Check whether login succeeded
-                if (result.success && result.sessionKey) {
-
-                    // Send the session key to the PHP session handler
-                    return fetch("setSession.php", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            sessionKey: result.sessionKey
-                        })
-                    });
+                if (!result.success || !result.sessionKey) {
+                    throw new Error(
+                        result.message || "Login failed. Check your credentials."
+                    );
                 }
 
-                throw new Error(
-                    result.message || "Login failed. Check your credentials."
-                );
+
+
+                //TROUBLESHOOTING
+                console.log("Backend login succeeded. Creating PHP session...");
+                
+                // Create the local PHP session
+                return fetch("setSession.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        sessionKey: result.sessionKey
+                    })
+                });
             })
 
             .then(function (response) {
@@ -110,7 +117,7 @@ document.addEventListener("DOMContentLoaded", function () {
             })
 
             .then(function () {
-                // Redirect after the session is established
+                // Redirect after successful login and session creation
                 window.location.href = "index.php";
             })
 
@@ -139,10 +146,8 @@ document.addEventListener("DOMContentLoaded", function () {
             const name = document.getElementById("name").value.trim();
             const email = document.getElementById("email").value.trim();
             const password = document.getElementById("password").value;
-
-            // Keep this spelling if your HTML uses "confrimPassword"
             const confirmPassword =
-                document.getElementById("confrimPassword").value;
+                document.getElementById("confirmPassword").value;
 
             const registerMessage =
                 document.getElementById("registerMessage");
@@ -170,6 +175,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
+            //TROUBLESHOOTING
+            console.log("Sending login request to backend...");
+
             // Send registration information to the backend
             fetch("http://100.110.65.121/register_handler.php", {
                 method: "POST",
@@ -196,7 +204,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         );
 
                         throw new Error(
-                            "The server returned an invalid response."
+                            "The server returned an invalid registration response."
                         );
                     }
 
@@ -226,6 +234,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     }, 1500);
 
                 } else {
+
                     if (registerMessage) {
                         registerMessage.textContent =
                             result.message ||
