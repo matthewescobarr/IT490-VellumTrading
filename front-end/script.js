@@ -83,6 +83,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Create the local PHP session
                 return fetch("setSession.php", {
                     method: "POST",
+                    credentials: "same-origin",
                     headers: {
                         "Content-Type": "application/json"
                     },
@@ -238,7 +239,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (registerMessage) {
                         registerMessage.textContent =
                             result.message ||
-                            "Registration failed. Please try again.";
+                            "User already exists. Please login.";
                     }
                 }
             })
