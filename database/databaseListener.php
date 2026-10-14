@@ -14,7 +14,7 @@ if ($mydb->errno != 0) {
 
 echo "Successfully connected to vellum_trading" . PHP_EOL;
 
-function doRegister($email,$password)
+function doRegister($name,$email,$password)
 {
     // lookup username in database
     // check password
@@ -32,9 +32,9 @@ function doRegister($email,$password)
 
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
-    $query = "INSERT INTO users (email, password_hash) VALUES (?, ?)";
+    $query = "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)";
     $stmt = $mydb->prepare($query);
-    $stmt->bind_param("ss", $email, $password_hash);
+    $stmt->bind_param("sss", $name, $email, $password_hash);
     $stmt->execute();
     
     //return false if not valid
@@ -46,12 +46,60 @@ function doRegister($email,$password)
     
 }
 
-function doLogin($username,$password)
+function doLogin($email,$password)
 {
     // lookup username in databas
     // check password
-    return true;
+    global $mydb;
+
+    $query = "SELECT user_id, password_hash FROM users WHERE email = ?";
+    $stmt = $mydb->prepare($query);
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    if ($result->num_rows == 0) {
+      return false;
+    }
+
+
+    $row = $result->fetch_assoc();
     //return false if not valid
+    if (!password_verify($password, $row['password_hash'])) {
+      return false;
+    } else {
+      $sessionKey = hash('sha256', random_bytes(32));
+
+      $query = "INSERT INTO sessions (user_id, session_key) VALUES (?, ?)";
+      $stmt = $mydb->prepare($query);
+      $stmt->bind_param("is", $row['user_id'], $sessionKey);
+
+      if ($stmt->execute()) {
+        return $sessionKey;
+      } else {
+        return false;
+      }
+    }
+}
+
+function doValidate($sessionId) {
+  global $mydb;
+  
+  try {
+  $query = "SELECT created_at FROM sessions WHERE session_key = ? AND created_at > NOW() - INTERVAL 1 HOUR";
+  $stmt = $mydb->prepare($query);
+  $stmt->bind_param("s", $sessionId);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  if ($result->num_rows == 0) {
+    return false;
+  } else {
+    return true;
+  }
+  } catch (mysqli_sql_exception $e) {
+    error_log("Session Validation Error:" . $e->getMessage());
+    return false;
+  }
 }
 
 function requestProcessor($request)
@@ -65,7 +113,7 @@ function requestProcessor($request)
   switch ($request['type'])
   {
     case "register":
-      return doRegister($request['email'],$request['password']);
+      return doRegister($request['name'],$request['email'],$request['password']);
     case "login":
       return doLogin($request['email'],$request['password']);
     case "validate_session":
@@ -74,11 +122,10 @@ function requestProcessor($request)
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }
 
-$server = new rabbitMQServer("testRabbitMQ.ini","testServer");
+$server = new rabbitMQServer("testRabbitMQ.ini","database");
 
 echo "testRabbitMQServer BEGIN".PHP_EOL;
 $server->process_requests('requestProcessor');
 echo "testRabbitMQServer END".PHP_EOL;
 exit();
 ?>
-
