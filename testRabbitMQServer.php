@@ -11,6 +11,12 @@ function sendDatabaseRequest($request)
     return $client->send_request($request);
 }
 
+function sendDmzRequest($request)
+{
+	$client = new rabbitMQClient("testRabbitMQ.ini", "dmz");
+	return $client->send_request($request);
+}
+
 function doLogin($email, $password)
 {
     $response = sendDatabaseRequest([
@@ -19,13 +25,10 @@ function doLogin($email, $password)
         "password" => $password
     ]);
 
-    // The database processor must return a non-empty session key
-    // after successful authentication.
     if (is_string($response) && trim($response) !== '') {
         return $response;
     }
 
-    // If the database processor returns an array, accept its sessionKey.
     if (is_array($response)
         && ($response['success'] ?? false) === true
         && !empty($response['sessionKey'])
@@ -66,6 +69,35 @@ function doValidate($sessionId)
     }
 
     return false;
+}
+function doStockPrice($symbol)
+{
+    if (!is_string($symbol) || trim($symbol) === '') {
+        return [
+            "success" => false,
+            "error" => [
+                "code" => "missing_symbol",
+                "message" => "A stock symbol is required."
+            ]
+        ];
+    }
+
+    $response = sendDmzRequest([
+        "type" => "stock_price",
+        "symbol" => strtoupper(trim($symbol))
+    ]);
+
+    if (is_array($response)) {
+        return $response;
+    }
+
+    return [
+        "success" => false,
+        "error" => [
+            "code" => "invalid_dmz_response",
+            "message" => "The DMZ returned an unexpected response."
+        ]
+    ];
 }
 
 function requestProcessor($request)
@@ -109,6 +141,29 @@ function requestProcessor($request)
             }
 
             return doValidate($request['sessionId']);
+	case "stock_price":
+            if (empty($request['symbol']) || !is_string($request['symbol'])) {
+                return [
+                    "success" => false,
+                    "error" => [
+                        "code" => "missing_symbol",
+                        "message" => "A stock symbol is required."
+                    ]
+                ];
+            }
+            return doStockPrice($request['symbol']);
+	case "portfolio":
+    if (
+        empty($request['sessionKey']) ||
+        !isset($request['action'])
+    ) {
+        return [
+            "success" => false,
+            "message" => "Missing session key or portfolio action."
+        ];
+    }
+
+    return sendDatabaseRequest($request);
 
         default:
             return [
