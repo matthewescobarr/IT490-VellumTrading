@@ -32,18 +32,34 @@ function doRegister($name,$email,$password)
 
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
-    $query = "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)";
-    $stmt = $mydb->prepare($query);
-    $stmt->bind_param("sss", $name, $email, $password_hash);
-    $stmt->execute();
+    $mydb->begin_transaction();
+
+    try{
+      $query = "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)";
+      $stmt = $mydb->prepare($query);
+      $stmt->bind_param("sss", $name, $email, $password_hash);
+      if (!$stmt->execute()) {
+        $mydb->rollback();
+        return false;
+      }
+
+      $user_id = $mydb->insert_id;
+      $query = "INSERT INTO virtual_accounts (user_id) VALUES (?)";
+      $stmt = $mydb->prepare($query);
+      $stmt->bind_param("i", $user_id);
+      if (!$stmt->execute()) {
+        $mydb->rollback();
+        return false;
+      }
     
-    //return false if not valid
-    if ($mydb->errno != 0) {
+      $mydb->commit();
+
+      return true;
+    } catch (mysqli_sql_exception  $e) {
+      $mydb->rollback();
+      error_log("Registration database error: " . e->getMessage());
       return false;
     }
-
-    return true;
-    
 }
 
 function doLogin($email,$password)
@@ -104,7 +120,7 @@ function doValidate($sessionId) {
 
 function requestProcessor($request)
 {
-  echo "received request".PHP_EOL;
+  echo "received request type:" . ($request['type'] ?? 'unknown') . PHP_EOL;
   //var_dump($request);
   if(!isset($request['type']))
   {
