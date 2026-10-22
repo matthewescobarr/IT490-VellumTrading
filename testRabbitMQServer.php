@@ -152,6 +152,42 @@ function requestProcessor($request)
                 ];
             }
             return doStockPrice($request['symbol']);
+	case "trade":
+		if (
+			empty($request['sessionKey']) || 
+			empty($request['action']) ||
+			empty($request['symbol']) ||
+			!isset($request['quantity']) ||
+			!is_numeric($request['quantity']) || 
+			(float)$request['quantity'] <= 0
+		) {
+			return [
+				"success" => false,
+				"message" => "Missing or invalid trade information."
+			];
+		}
+		$action = strtolower(trim($request['action']));
+
+		if (!in_array($action, ['buy', 'sell'], true)) {
+			return [
+				"success" => false,
+				"message" => "Trade action must be buy or sell."
+			];
+		}
+		$request['action'] = $action;
+		$request['symbol'] = strtoupper(trim($request['symbol']));
+		$request['quantity'] = (float)$request['quantity'];
+
+		return sendDatabaseRequest($request);
+	
+	case "historical_chart":
+		if (empty($request['sessionKey'])) {
+			return [
+				"success" => false,
+				"message" => "A session key is required to retrieve portfolio history"
+			];
+		}
+		return sendDatabaseRequest($request);
 	case "portfolio":
     if (
         empty($request['sessionKey']) ||
