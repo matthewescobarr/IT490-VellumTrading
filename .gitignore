@@ -1,0 +1,2 @@
+# Local RabbitMQ connection settings (contains credentials)
+/DMZ/dmzRabbitMQ.ini
