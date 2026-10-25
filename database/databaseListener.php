@@ -5,6 +5,7 @@ require_once(__DIR__ . '/../get_host_info.inc');
 require_once(__DIR__ . '/../rabbitMQLib.inc');
 require_once(__DIR__ . '/db_config.php');
 require_once(__DIR__ . '/trade_functions.php');
+require_once(__DIR__ . '/portfolio_functions.php');
 
 $mydb = new mysqli($db_host, $db_user, $db_password, $db_name);
 
@@ -139,6 +140,10 @@ function requestProcessor($request)
       return processTrade($request);
     case "portfolio":
       return getPortfolio($request);
+    case "portfolio_history":
+      return savePortfolioHistory($request);
+    case "get_portfolio_history":
+      return getPortfolioHistory($request);
   }
   return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }
