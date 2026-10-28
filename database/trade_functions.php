@@ -75,7 +75,7 @@ function processTrade($request)
     $mydb->begin_transaction();
 
     try {
-        $query = "SELECT cash_balance FROM virtual_accounts WHERE user_id = ? FOR UPDATE";
+        $query = "SELECT cash_balance FROM virtual_accounts WHERE user_id = ?";
 
         $stmt = $mydb->prepare($query);
         $stmt->bind_param("i", $user_id);
