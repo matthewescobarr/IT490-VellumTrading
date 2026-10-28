@@ -59,7 +59,7 @@ function doRegister($name,$email,$password)
       return true;
     } catch (mysqli_sql_exception  $e) {
       $mydb->rollback();
-      error_log("Registration database error: " . e->getMessage());
+      error_log("Registration database error: " . $e->getMessage());
       return false;
     }
 }
