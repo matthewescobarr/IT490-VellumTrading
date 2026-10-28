@@ -122,7 +122,7 @@ function processTrade($request)
         $tradeStmt->bind_param("isidd", $user_id, $symbol, $quantity, $execution_price, $total_amount);
         $tradeStmt->execute();
         } else {
-            $query = "SELECT quantity FROM holdings WHERE user_id = ? AND symbol = ? FOR UPDATE";
+            $query = "SELECT quantity FROM holdings WHERE user_id = ? AND symbol = ?";
             $holdingsStmt = $mydb->prepare($query);
             $holdingsStmt->bind_param("is", $user_id, $symbol);
             $holdingsStmt->execute();
