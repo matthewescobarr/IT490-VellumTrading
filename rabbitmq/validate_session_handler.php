@@ -1,21 +1,18 @@
 <?php
+header('Content-Type: application/json; charset=utf-8');
+$allowed_origin = ['http://www.sample.com', 'http://100.115.133.49'];
 
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
+if (isset($_SERVER['HTTP_ORIGIN']) &&
+   in_array( $_SERVER['HTTP_ORIGIN'], $allowed_origin, true)) {
+    header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode([
-        "valid" => false,
-        "message" => "POST requests only."
-    ]);
+
+header('Content-Type: application/json');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
     exit;
 }
 

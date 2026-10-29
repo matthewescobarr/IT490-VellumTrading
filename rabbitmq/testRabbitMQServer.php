@@ -7,8 +7,13 @@ require_once('rabbitMQLib.inc');
 
 function sendDatabaseRequest($request)
 {
-    $client = new rabbitMQClient("testRabbitMQ.ini", "database");
-    return $client->send_request($request);
+	static $client = null;
+	if ($client === null) {
+		$client = new rabbitMQClient('testRabbitMQ.ini', 'database');
+	}
+	return $client->send_request($request);
+   // $client = new rabbitMQClient("testRabbitMQ.ini", "database");
+   // return $client->send_request($request);
 }
 
 function sendDmzRequest($request)
@@ -25,15 +30,19 @@ function doLogin($email, $password)
         "password" => $password
     ]);
 
-    if (is_string($response) && trim($response) !== '') {
-        return $response;
-    }
+	if (is_string($response)&&trim($response) !== '') {
+    return [
+        "success" => true,
+        "sessionKey" => $response
+    ];
+}
+
 
     if (is_array($response)
         && ($response['success'] ?? false) === true
         && !empty($response['sessionKey'])
         && is_string($response['sessionKey'])) {
-        return $response['sessionKey'];
+        return $response;
     }
 
     return false;
@@ -200,7 +209,15 @@ function requestProcessor($request)
     }
 
     return sendDatabaseRequest($request);
+	case "portfolio_history":
+    		if (empty($request['sessionKey'])) {
+        		return [
+            			"success" => false,
+           			 "message" => "A session key is required to save portfolio history"
+       			 ];
+    		}
 
+    	return sendDatabaseRequest($request);
         default:
             return [
                 "success" => false,

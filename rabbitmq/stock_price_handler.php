@@ -1,5 +1,20 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
+$allowed_origin = ['http://www.sample.com', 'http://100.115.133.49'];
+
+if (isset($_SERVER['HTTP_ORIGIN']) &&
+   in_array( $_SERVER['HTTP_ORIGIN'], $allowed_origin, true)) {
+    header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
+}
+
+
+header('Content-Type: application/json');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
 
 require_once('path.inc');
 require_once('get_host_info.inc');
@@ -26,7 +41,7 @@ if (!is_array($data) || empty($data['symbol']) || !is_string($data['symbol'])) {
 }
 
 try {
-    $client = new rabbitMQClient('testRabbitMQ.ini', 'testServer');
+    $client = new rabbitMQClient('testRabbitMQ.ini', 'dmz');
 
     $response = $client->send_request([
         'type' => 'stock_price',
