@@ -14,7 +14,7 @@ function getPortfolio($request)
             ];
         }
         
-        $sessionKey = $request['sessionKey'] ?? "";
+        $sessionKey = $request['sessionKey'];
 
         $query = "SELECT user_id FROM sessions WHERE session_key = ? AND created_at > NOW() - INTERVAL 1 HOUR";
         $stmt = $mydb->prepare($query);

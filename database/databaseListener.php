@@ -93,7 +93,10 @@ function doLogin($email,$password)
       $stmt->bind_param("is", $row['user_id'], $sessionKey);
 
       if ($stmt->execute()) {
-        return $sessionKey;
+        return [
+          "success" => true,
+          "sessionKey" => $sessionKey
+        ];
       } else {
         return false;
       }
