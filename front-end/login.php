@@ -17,6 +17,7 @@
             <h1>Vellum Trading</h1>
             <h2>Login</h2>
 
+            <!-- Login Form -->
             <form id="loginForm">
                 <label for="email">Email</label>
                 <input type="email" id="email" name="email" required>

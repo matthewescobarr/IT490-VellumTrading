@@ -1,14 +1,19 @@
+<?php
+// check that user is logged in, and has valid session key, otherwise redirect to login page
+require_once 'authCheck.php';
+?>
+
 <!DOCTYPE html>
 <html lang="en">
     
 
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">  <!-- responsive design -->
 
         <title>Vellum Trading</title>
 
-        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="style.css">  <!-- styling -->
     </head>
 
     <body>
@@ -17,12 +22,11 @@
 
             <div> 
                 <a href="index.php">Home</a>
-                <a href="dashboard.php">Dashboard</a>
                 <a href="search.php">Search Stocks</a>
+                <a href="trade.php">Trade Stocks</a>
                 <a href="portfolio.php">Portfolio</a>
                 <a href="transactions.php">Transactions</a>
-                <a href="login.php">Logout</a>
-                <a href="register.php">Register</a>
+                <a href="logout.php">Logout</a>
             </div>
 
         </nav>
@@ -39,4 +43,4 @@
 
     </body>
 
-<html>
+</html>
