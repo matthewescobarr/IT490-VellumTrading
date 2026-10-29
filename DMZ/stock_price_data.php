@@ -1,113 +1,159 @@
 <?php
 
-declare(strict_types=1);
-
-function stockPriceError(
-    string $symbol,
-    string $code,
-    string $message,
-    ?int $httpStatus = null
-): array {
+function marketDataError($symbol, $code, $message, $httpStatus = null)
+{
     return [
         'success' => false,
         'symbol' => $symbol,
         'error' => ['code' => $code, 'message' => $message],
         'http_status' => $httpStatus,
-        'source' => 'Twelve Data',
+        'source' => 'Alpaca',
     ];
 }
 
-
-function getStockPrice(string $symbol): array
+// Send a request to Alpaca and return the JSON response
+function alpacaRequest($symbol, $path, $parameters = [])
 {
-    $symbol = strtoupper(trim($symbol));
+    // Tells alpaca what market data to use
+    $parameters['feed'] = 'iex';
+    // completed url would look like https://data.alpaca.markets/v2/stocks/AAPL/quotes/latest?feed=iex
+    $url = 'https://data.alpaca.markets/v2/stocks/' . rawurlencode($symbol)
+         . '/' . $path . '?' . http_build_query($parameters);
 
-    // formats the symbol
-    if (!preg_match('/^[A-Z0-9][A-Z0-9.\-]{0,14}$/', $symbol)) {
-        return stockPriceError($symbol, 'invalid_symbol', 'Invalid stock symbol format.');
-    }
-
-    $apiKey = getenv('TWELVE_DATA_API_KEY');
-    if (!is_string($apiKey) || trim($apiKey) === '') {
-        return stockPriceError($symbol, 'missing_api_key', 'TWELVE_DATA_API_KEY is not configured.');
-    }
-
-    $url = 'https://api.twelvedata.com/price?' . http_build_query([
-        'symbol' => $symbol,
-    ], '', '&', PHP_QUERY_RFC3986);
-
+    // initialize curl request with alpaca
     $ch = curl_init($url);
-    if ($ch === false) {
-        return stockPriceError($symbol, 'request_setup_failed', 'Could not initialize the HTTP request.');
-    }
-
-    $options = [
+    curl_setopt_array($ch, [
+        // return the response as a string
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_CONNECTTIMEOUT => 5,
         CURLOPT_TIMEOUT => 15,
-        CURLOPT_FOLLOWLOCATION => false,
-        CURLOPT_SSL_VERIFYPEER => true,
-        CURLOPT_SSL_VERIFYHOST => 2,
+        // set the Alpaca API keys for authentication
         CURLOPT_HTTPHEADER => [
-            'Accept: application/json',
-            'Authorization: apikey ' . trim($apiKey),
+            // these keys are gotten when you load your keys before running the lisnter
+            'APCA-API-KEY-ID: ' . getenv('ALPACA_API_KEY_ID'),
+            'APCA-API-SECRET-KEY: ' . getenv('ALPACA_API_SECRET_KEY'),
         ],
-    ];
+    ]);
 
-    if (!curl_setopt_array($ch, $options)) {
-        curl_close($ch);
-        return stockPriceError($symbol, 'request_setup_failed', 'Could not configure the HTTP request.');
-    }
-
+    // sends the request to alpaca 
     $body = curl_exec($ch);
-    $httpStatus = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $transferError = curl_error($ch);
+    $httpStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
+    // converts the Alpaca response and if not then it will return an empty string
+    $data = json_decode($body ?: '', true);
 
-    if ($body === false) {
-        return stockPriceError($symbol, 'network_error', $transferError ?: 'HTTP request failed.', $httpStatus);
+    // checks if the request was successful 
+    if ($httpStatus !== 200 || !is_array($data)) {
+        return marketDataError($symbol, 'api_error', 'Alpaca request failed.', $httpStatus);
     }
 
-    $data = json_decode($body, true);
-    if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
-        return stockPriceError($symbol, 'invalid_json', 'Twelve Data returned invalid JSON.', $httpStatus);
+    return ['success' => true, 'data' => $data];
+}
+
+// Bid and ask for simulated buy/sell trades
+function getStockQuote($symbol)
+{
+    $symbol = strtoupper(trim($symbol));
+    $result = alpacaRequest($symbol, 'quotes/latest');
+    if (!$result['success']) {
+        return $result;
     }
 
-    if ($httpStatus === 429 || ($data['code'] ?? null) == 429) {
-        return stockPriceError($symbol, 'rate_limited', 'Twelve Data request limit reached. Try again later.', $httpStatus);
+    $bid = $result['data']['quote']['bp'] ?? null;
+    $ask = $result['data']['quote']['ap'] ?? null;
+    if (!is_numeric($bid) || !is_numeric($ask) || $bid <= 0 || $ask <= 0 || $bid > $ask) {
+        return marketDataError($symbol, 'invalid_quote', 'Alpaca returned an invalid bid or ask.');
     }
 
-    if ($httpStatus !== 200 || ($data['status'] ?? null) === 'error') {
-        $message = isset($data['message']) && is_string($data['message'])
-            ? substr($data['message'], 0, 300)
-            : 'Twelve Data did not accept the request.';
-        return stockPriceError($symbol, 'provider_error', $message, $httpStatus);
+    return [
+        'success' => true,
+        'symbol' => $symbol,
+        'bid' => (string) $bid,
+        'ask' => (string) $ask,
+        'source' => 'Alpaca',
+        'retrieved_at' => gmdate('Y-m-d\TH:i:s\Z'),
+    ];
+}
+
+// Last traded price for stock displays
+function getStockPrice($symbol)
+{
+    $symbol = strtoupper(trim($symbol));
+    $result = alpacaRequest($symbol, 'trades/latest');
+    if (!$result['success']) {
+        return $result;
     }
 
-    $price = $data['price'] ?? null;
-    if (!is_string($price) && !is_int($price) && !is_float($price)) {
-        return stockPriceError($symbol, 'missing_price', 'Price was missing from the response.', $httpStatus);
-    }
-    if (!is_numeric($price) || !is_finite((float) $price) || (float) $price <= 0) {
-        return stockPriceError($symbol, 'invalid_price', 'Price was not a valid positive number.', $httpStatus);
+    $price = $result['data']['trade']['p'] ?? null;
+    if (!is_numeric($price) || $price <= 0) {
+        return marketDataError($symbol, 'invalid_price', 'Alpaca returned an invalid stock price.');
     }
 
     return [
         'success' => true,
         'symbol' => $symbol,
         'price' => (string) $price,
-        'source' => 'Twelve Data',
+        'source' => 'Alpaca',
         'retrieved_at' => gmdate('Y-m-d\TH:i:s\Z'),
     ];
 }
 
-if (isset($_SERVER['SCRIPT_FILENAME']) && realpath((string) $_SERVER['SCRIPT_FILENAME']) === __FILE__) {
-    if (PHP_SAPI !== 'cli') {
-        http_response_code(404);
-        exit;
+// Closing prices for historical charts
+function getHistoricalChart($symbol, $timeframe = '1Day', $start = null, $end = null)
+{
+    $symbol = strtoupper(trim($symbol));
+    $start = $start ?? gmdate('Y-m-d', strtotime('-30 days'));
+    $end = $end ?? gmdate('Y-m-d\TH:i:s\Z');
+
+    $result = alpacaRequest($symbol, 'bars', [
+        'timeframe' => $timeframe,
+        'start' => $start,
+        'end' => $end,
+        'limit' => 1000,
+        'adjustment' => 'raw',
+    ]);
+    if (!$result['success']) {
+        return $result;
     }
-    $symbol = $argv[1] ?? 'AAPL';
-    $result = getStockPrice($symbol);
-    echo json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), PHP_EOL;
-    exit($result['success'] ? 0 : 1);
+
+    $history = [];
+    foreach ($result['data']['bars'] ?? [] as $bar) {
+        $history[] = [
+            'timestamp' => $bar['t'],
+            'close' => (string) $bar['c'],
+        ];
+    }
+
+    return [
+        'success' => true,
+        'symbol' => $symbol,
+        'timeframe' => $timeframe,
+        'bars' => $history,
+        'next_page_token' => $result['data']['next_page_token'] ?? null,
+        'source' => 'Alpaca',
+        'retrieved_at' => gmdate('Y-m-d\TH:i:s\Z'),
+    ];
+}
+
+// Run this file directly to test Alpaca without RabbitMQ
+if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
+    $type = $argv[1] ?? 'quote';
+    $symbol = $argv[2] ?? 'AAPL';
+
+    switch ($type) {
+        case 'quote':
+            $response = getStockQuote($symbol);
+            break;
+        case 'price':
+            $response = getStockPrice($symbol);
+            break;
+        case 'history':
+            $response = getHistoricalChart($symbol, $argv[3] ?? '1Day');
+            break;
+        default:
+            $response = marketDataError($symbol, 'invalid_type', 'Use quote, price, or history.');
+    }
+
+    echo json_encode($response, JSON_PRETTY_PRINT), PHP_EOL;
+    exit($response['success'] ? 0 : 1);
 }
