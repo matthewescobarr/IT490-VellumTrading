@@ -1,63 +1,94 @@
 <?php
+// check that user is logged in, and has valid session key, otherwise redirect to login page
+
 require_once 'authCheck.php';
+
+// in case there is no session key, make a new one
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Pass the logged-in user's session key to JavaScript, session_key used as a backup if sessionKey does not exist
+$sessionKey = $_SESSION['sessionKey']
+    ?? $_SESSION['session_key']
+    ?? '';
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vellum Trading - Portfolio</title>
 
-        <title>Vellum Trading - Portfolio</title>
+    <link rel="stylesheet" href="style.css">
 
-        <link rel="stylesheet" href="style.css">
-    </head>
+    <script src="portfolio.js"></script>
+</head>
 
-    <body> 
-        <nav>
-            <h2>Vellum Trading</h2>
+<body>
+    <nav>
+        <h2>Vellum Trading</h2>
 
-            <div> 
-                <a href="index.php">Home</a>
-                <a href="dashboard.php">Dashboard</a>
-                <a href="search.php">Search Stocks</a>
-                <a href="portfolio.php">Portfolio</a>
-                <a href="transactions.php">Transactions</a>
-                <a href="logout.php">Logout</a>
-            </div>
+        <div>
+            <a href="index.php">Home</a>
+            <a href="search.php">Search Stocks</a>
+            <a href="trade.php">Trade Stocks</a>
+            <a href="portfolio.php">Portfolio</a>
+            <a href="transactions.php">Transactions</a>
+            <a href="logout.php">Logout</a>
+        </div>
+    </nav>
 
-        </nav>
-
-        <main>
-
+    <!-- retrieve portfolio page, store session key in html, -->
+    <main
+        id="portfolioPage"
+        data-session-key="<?= htmlspecialchars($sessionKey, ENT_QUOTES, 'UTF-8') ?>" 
+    >
         <h1>My Portfolio</h1>
 
-            <section>
-                <h2>Portfolio Value</h2>
-                <p>$10,000.00</p> 
-                <!-- Placeholder value; replace with actual portfolio data. -->
-            </section>
+        <p id="portfolioMessage" role="status" aria-live="polite">
+            Loading your portfolio...
+        </p>
 
-            <section>
-                <h2>Holdings</h2>
+        <!-- portfolio summary -->
+        <section class="card">
+            <h2>Portfolio Summary</h2>
 
+            <p>Available Cash</p>
+            <h3 id="cashBalance">—</h3>
+
+            <p>Holdings Value</p>
+            <h3 id="holdingsValue">—</h3>
+
+            <p>Total Portfolio Value</p>
+            <h2 id="totalPortfolioValue">—</h2>
+        </section>
+
+        <!-- individual stock holdings -->
+        <section class="card">
+            <h2>My Holdings</h2>
+
+            <div style="overflow-x: auto;">
                 <table>
+                    <thead>
+                        <tr>
+                            <th>Stock</th>
+                            <th>Shares</th>
+                            <th>Latest Price</th>
+                            <th>Market Value</th>
+                        </tr>
+                    </thead>
 
-                    <tr>
-                        <th>Stock</th>
-                        <th>Shares</th>
-                        <th>Price</th>
-                        <th>Value</th>
-                    </tr>
-
-                    <!-- backend stuff goes here -->
-
+                    <tbody id="holdingsTableBody">
+                        <tr>
+                            <td colspan="4">Loading holdings...</td>
+                        </tr>
+                    </tbody>
                 </table>
-            </section>
-
-        </main>
-
-    </body>
-
+            </div>
+        </section>
+    </main>
+</body>
 </html>

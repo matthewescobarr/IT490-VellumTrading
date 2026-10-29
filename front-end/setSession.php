@@ -31,7 +31,7 @@ if (
     exit;
 }
 
-// Ask the backend to validate the session key before trusting it.
+// ask the backend to validate the session key before trusting it
 $payload = json_encode([
     "sessionKey" => $data["sessionKey"]
 ]);
@@ -72,7 +72,7 @@ if (
     exit;
 }
 
-// Only create the session after the backend confirms the key is valid.
+// only create the session after the backend confirms the key is valid
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }

@@ -1,8 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-
-    // ==========================================
-    // LOGIN FORM
-    // ==========================================
+// login Form
 
     const loginForm = document.getElementById("loginForm");
 
@@ -14,12 +11,12 @@ document.addEventListener("DOMContentLoaded", function () {
             const password = document.getElementById("password").value;
             const loginMessage = document.getElementById("loginMessage");
 
-            // Clear previous messages
+            // clear previous messages
             if (loginMessage) {
                 loginMessage.textContent = "";
             }
 
-            // Validate input
+            // validate input
             if (!email || !password) {
                 if (loginMessage) {
                     loginMessage.textContent =
@@ -29,8 +26,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
 
-            //TROUBLESHOOTING
-            console.log("Sending login request to backend...");
             // Send login information to the backend
             fetch("http://100.110.65.121/login_handler.php", {
                 method: "POST",
@@ -49,7 +44,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     try {
                         result = JSON.parse(text);
-                    } catch (error) {
+                    } 
+                    
+                    catch (error) {
                         console.error("Invalid login response:", text);
                         throw new Error(
                             "The server returned an invalid login response."
@@ -68,19 +65,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
             .then(function (result) {
 
-                // Check whether login succeeded
+                // check whether login succeeded
                 if (!result.success || !result.sessionKey) {
                     throw new Error(
                         result.message || "Login failed. Check your credentials."
                     );
                 }
-
-
-
-                //TROUBLESHOOTING
-                console.log("Backend login succeeded. Creating PHP session...");
                 
-                // Create the local PHP session
+                // create the local PHP session
                 return fetch("setSession.php", {
                     method: "POST",
                     credentials: "same-origin",
@@ -99,8 +91,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     try {
                         sessionResult = JSON.parse(text);
-                    } catch (error) {
+                    }
+                    
+                    catch (error) {
                         console.error("Invalid session response:", text);
+                        
                         throw new Error(
                             "The session server returned an invalid response."
                         );
@@ -118,7 +113,7 @@ document.addEventListener("DOMContentLoaded", function () {
             })
 
             .then(function () {
-                // Redirect after successful login and session creation
+                // redirect after successful login and session creation
                 window.location.href = "index.php";
             })
 
@@ -134,9 +129,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-    // ==========================================
     // REGISTRATION FORM
-    // ==========================================
 
     const registerForm = document.getElementById("registerForm");
 
@@ -153,21 +146,21 @@ document.addEventListener("DOMContentLoaded", function () {
             const registerMessage =
                 document.getElementById("registerMessage");
 
-            // Clear previous messages
+            // clear previous messages
             if (registerMessage) {
                 registerMessage.textContent = "";
             }
 
-            // Validate input
+            // validate input
             if (!name || !email || !password || !confirmPassword) {
                 if (registerMessage) {
                     registerMessage.textContent =
-                        "Please complete all fields.";
+                        "Please fill everything out.";
                 }
                 return;
             }
 
-            // Ensure passwords match
+            // make sure passwords match
             if (password !== confirmPassword) {
                 if (registerMessage) {
                     registerMessage.textContent =
@@ -176,10 +169,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            //TROUBLESHOOTING
-            console.log("Sending login request to backend...");
 
-            // Send registration information to the backend
+            // send registration information to the backend
             fetch("http://100.110.65.121/register_handler.php", {
                 method: "POST",
                 headers: {
@@ -198,7 +189,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     try {
                         result = JSON.parse(text);
-                    } catch (error) {
+                    } 
+                    
+                    catch (error) {
                         console.error(
                             "Invalid registration response:",
                             text
@@ -229,12 +222,14 @@ document.addEventListener("DOMContentLoaded", function () {
                             "Registration successful! Redirecting to login...";
                     }
 
-                    // Redirect to login after successful registration
+                    // redirect to login after successful registration
                     setTimeout(function () {
                         window.location.href = "login.php";
                     }, 1500);
 
-                } else {
+                } 
+                
+                else {
 
                     if (registerMessage) {
                         registerMessage.textContent =

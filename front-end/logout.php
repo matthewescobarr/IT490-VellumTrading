@@ -1,6 +1,6 @@
 <?php
 
-session_start();
+session_start(); //start session
 
 $_SESSION = [];
 
@@ -11,7 +11,7 @@ if (ini_get("session.use_cookies")) {
         session_name(),
         "",
         [
-            "expires" => time() - 42000,
+            "expires" => time() - 42000, //about 11 hours
             "path" => $params["path"],
             "domain" => $params["domain"],
             "secure" => $params["secure"],
