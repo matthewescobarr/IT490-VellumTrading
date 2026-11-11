@@ -173,12 +173,12 @@ class rabbitMQClient
 	function process_response($response)
 	{
 		$uid = $response->getCorrelationId();
+		$this->conn_queue->ack($response->getDeliveryTag());
 		if (!isset($this->response_queue[$uid]))
 		{
 		  error_log("RabbitMQ: Unknown correlation ID: " . $uid);
 		  return true;
 		} 
-    $this->conn_queue->ack($response->getDeliveryTag());
 		$body = $response->getBody();
 		$payload = json_decode($body, true);
 		if (!(isset($payload)))
@@ -213,8 +213,9 @@ class rabbitMQClient
       $exchange->setType($this->exchange_type);
 
       $callback_queue = new AMQPQueue($channel);
-      $callback_queue->setName($this->queue."_response");
-      $callback_queue->declare();
+      $callback_queue->setName($this->queue."_response_".$uid);
+      $callback_queue->setFlags(AMQP_AUTODELETE);
+      $callback_queue->declareQueue();
 			$callback_queue->bind($exchange->getName(),$this->routing_key.".response");
 
 			$this->conn_queue = new AMQPQueue($channel);

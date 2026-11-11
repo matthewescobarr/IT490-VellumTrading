@@ -36,7 +36,8 @@ function validPrice($value): bool
 //Calculate portfolio value w current bid prices for existing stock holding plus avail. cash
 function calculatePortfolioValue(string $sessionKey): float
 {
-	$dbClient = new rabbitMQClient('testRabbitMQ.ini', 'testServer');
+	//$dbClient = new rabbitMQClient('testRabbitMQ.ini', 'testServer');
+	$dbClient = new rabbitMQClient('testRabbitMQ.ini', 'database');
 	$portfolio = $dbClient->send_request([
 		'type' => 'portfolio',
 		'action' => 'get',
@@ -114,7 +115,8 @@ function savePortfolioSnapshot(
 	string $sessionKey,
 	float $totalValue
 ): array {
-	$dbClient = new rabbitMQClient('testRabbitMQ.ini', 'testServer');
+	 //$dbClient = new rabbitMQClient('testRabbitMQ.ini', 'testServer');
+	$dbClient = new rabbitMQClient('testRabbitMQ.ini', 'database');
 	$response = $dbClient->send_request([
 		'type' => 'portfolio_history',
 		'action' => 'save',

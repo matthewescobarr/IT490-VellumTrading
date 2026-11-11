@@ -189,7 +189,7 @@ function requestProcessor($request)
 
 		return sendDatabaseRequest($request);
 	
-	case "historical_chart":
+	case "get_portfolio_history":
 		if (empty($request['sessionKey'])) {
 			return [
 				"success" => false,
