@@ -3,7 +3,6 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-
 // Sends a trade confirmation email
 function sendTradeConfirmation($email, $tradeDetails)
 {
@@ -201,4 +200,4 @@ function sendTradeConfirmation($email, $tradeDetails)
 
         return false;
     }
-}
+} 

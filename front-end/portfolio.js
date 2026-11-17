@@ -237,3 +237,178 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
 });
+
+// ==========================================
+// PORTFOLIO HISTORICAL PERFORMANCE GRAPH
+// ==========================================
+
+const portfolioPage = document.getElementById("portfolioPage");
+
+if (portfolioPage) {
+
+    const historyMessage = document.getElementById("historyMessage");
+    const portfolioHistoryCanvas = document.getElementById("portfolioHistoryChart");
+
+    const sessionKey = portfolioPage.dataset.sessionKey;
+
+    let portfolioHistoryChart = null;
+
+    async function loadPortfolioHistory() {
+
+        if (!portfolioHistoryCanvas) {
+            console.error("[Portfolio History] Chart canvas not found.");
+            return;
+        }
+
+        if (!sessionKey) {
+            historyMessage.textContent = "Session information is missing.";
+            return;
+        }
+
+        historyMessage.textContent = "Loading portfolio history...";
+
+        try {
+
+            const response = await fetch(
+                "http://100.110.65.121/historical_chart_handler.php",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        session_key: sessionKey
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(
+                    "Server returned status " + response.status
+                );
+            }
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(
+                    data.message || "Unable to retrieve portfolio history."
+                );
+            }
+
+            if (!data.history || data.history.length === 0) {
+                historyMessage.textContent =
+                    "No portfolio history available yet.";
+
+                return;
+            }
+
+            // Extract dates and portfolio values
+            const labels = data.history.map(item => {
+                return new Date(item.recorded_at).toLocaleString();
+            });
+
+            const values = data.history.map(item => {
+                return Number(item.total_value);
+            });
+
+            // Remove previous chart before creating a new one
+            if (portfolioHistoryChart) {
+                portfolioHistoryChart.destroy();
+            }
+
+            // Create historical portfolio line graph
+            portfolioHistoryChart = new Chart(
+                portfolioHistoryCanvas,
+                {
+                    type: "line",
+
+                    data: {
+                        labels: labels,
+
+                        datasets: [
+                            {
+                                label: "Portfolio Value ($)",
+
+                                data: values,
+
+                                borderWidth: 2,
+
+                                tension: 0.3,
+
+                                fill: false,
+
+                                pointRadius: 3,
+
+                                pointHoverRadius: 6
+                            }
+                        ]
+                    },
+
+                    options: {
+                        responsive: true,
+
+                        maintainAspectRatio: false,
+
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return "$" +
+                                            Number(context.parsed.y).toFixed(2);
+                                    }
+                                }
+                            }
+                        },
+
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+
+                                ticks: {
+                                    callback: function(value) {
+                                        return "$" + value;
+                                    }
+                                },
+
+                                title: {
+                                    display: true,
+                                    text: "Portfolio Value"
+                                }
+                            },
+
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: "Recorded Date"
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+
+            historyMessage.textContent = "";
+
+        } catch (error) {
+
+            console.error(
+                "[Portfolio History] Failed to load history:",
+                error
+            );
+
+            historyMessage.textContent =
+                "Unable to load portfolio history.";
+        }
+    }
+
+    // Load the graph
+    loadPortfolioHistory();
+
+}

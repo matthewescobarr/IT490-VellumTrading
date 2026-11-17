@@ -5,7 +5,6 @@ require_once 'authCheck.php';
 
 <!DOCTYPE html>
 <html lang="en">
-    
 
     <head>
         <meta charset="UTF-8">
@@ -19,6 +18,7 @@ require_once 'authCheck.php';
     <body>
 
             <nav> 
+                <h2>Vellum Trading</h2>
 
             <div> 
                 <a href="index.php">Home</a>

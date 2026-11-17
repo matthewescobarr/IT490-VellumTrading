@@ -89,6 +89,17 @@ $sessionKey = $_SESSION['sessionKey']
                 </table>
             </div>
         </section>
+
+        <section class="card">
+            <h2>Portfolio Performance</h2>
+            <p id="historyMessage">
+                Loading portfolio history...
+            </p>
+            
+            <div class="chart-container">
+                <canvas id="portfolioHistoryChart"></canvas>
+            </div>
+        </section>
     </main>
 </body>
 </html>
