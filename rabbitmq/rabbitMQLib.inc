@@ -72,12 +72,19 @@ class rabbitMQServer
       $exchange->setType($this->exchange_type);
 
 			$conn_queue = new AMQPQueue($channel);
-			$conn_queue->setName($msg->getReplyTo());
-			$conn_queue->declareQueue();
+$conn_queue->setName($msg->getReplyTo());
 
-			$replykey = $this->routing_key.".response";
-			$conn_queue->bind($exchange->getName(),$replykey);
-			$exchange->publish(json_encode($response),$replykey,AMQP_NOPARAM,array('correlation_id'=>$msg->getCorrelationId()));
+$default_exchange = new AMQPExchange($channel);
+$default_exchange->setName("");
+
+$default_exchange->publish(
+    json_encode($response),
+    $msg->getReplyTo(),
+    AMQP_NOPARAM,
+    array(
+        'correlation_id' => $msg->getCorrelationId()
+    )
+);
 
 				return;
 			}
@@ -173,12 +180,12 @@ class rabbitMQClient
 	function process_response($response)
 	{
 		$uid = $response->getCorrelationId();
-		$this->conn_queue->ack($response->getDeliveryTag());
 		if (!isset($this->response_queue[$uid]))
 		{
 		  error_log("RabbitMQ: Unknown correlation ID: " . $uid);
 		  return true;
 		} 
+    $this->conn_queue->ack($response->getDeliveryTag());
 		$body = $response->getBody();
 		$payload = json_decode($body, true);
 		if (!(isset($payload)))
@@ -213,10 +220,8 @@ class rabbitMQClient
       $exchange->setType($this->exchange_type);
 
       $callback_queue = new AMQPQueue($channel);
-      $callback_queue->setName($this->queue."_response_".$uid);
-      $callback_queue->setFlags(AMQP_AUTODELETE);
-      $callback_queue->declareQueue();
-			$callback_queue->bind($exchange->getName(),$this->routing_key.".response");
+      $callback_queue->setFlags(AMQP_EXCLUSIVE | AMQP_AUTODELETE);
+      $callback_queue->declare();
 
 			$this->conn_queue = new AMQPQueue($channel);
 			$this->conn_queue->setName($this->queue);
