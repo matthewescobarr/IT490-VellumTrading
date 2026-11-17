@@ -39,6 +39,10 @@ require_once 'authCheck.php';
                 Practice buying and seling stocks here with virtual money.
             </p>
 
+	    <div id="stock-news-widget">
+                <h3>Latest Market News</h3>
+                <ul id="news-list">Loading news...</ul>
+            </div>
             <script>
                 const rssUrl = 'https://cnbc.com';
                 const apiUrl = `https://rss2json.com{encodeURIComponent(rssUrl)}`;
