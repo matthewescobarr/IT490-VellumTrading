@@ -39,6 +39,29 @@ require_once 'authCheck.php';
                 Practice buying and seling stocks here with virtual money.
             </p>
 
+            <script>
+                const rssUrl = 'https://cnbc.com';
+                const apiUrl = `https://rss2json.com{encodeURIComponent(rssUrl)}`;
+
+                fetch(apiUrl).then(response => response.json()).then(data => {
+                    const list = document.getElementById('news-list');
+                    list.innerHTML = ''; //"Loading..." text
+
+                // Displays the top 5 articles
+                    data.items.slice(0, 5).forEach(article => {
+                        const li = document.createElement('li');
+                        const date = new Date(article.pubDate).toLocaleDateString();
+        
+                        li.innerHTML = `<a href="${article.link}" target="_blank" rel="noopener noreferrer">${article.title}</a>
+                        <span class="news-date">${date}</span>`;
+                        list.appendChild(li);
+                    });
+                }).catch(error => {
+                    document.getElementById('news-list').innerHTML = 'Unable to load stock news.';
+                    console.error('Error fetching RSS feed:', error);
+                });
+            </script>
+
         </main>
 
     </body>
