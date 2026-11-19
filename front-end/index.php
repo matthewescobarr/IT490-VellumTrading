@@ -34,9 +34,8 @@ require_once 'authCheck.php';
         <main> 
             <h1>Welcome to Vellum Trading</h1> 
 
-
             <p> 
-                Practice buying and seling stocks here with virtual money.
+                Practice buying and selling stocks here with virtual money.
             </p>
 
 	    <div id="stock-news-widget">
@@ -53,12 +52,12 @@ require_once 'authCheck.php';
 
                 // Displays the top 5 articles
                     data.items.slice(0, 5).forEach(article => {
-                        const li = document.createElement('li');
+                        const link = document.createElement('li');
                         const date = new Date(article.pubDate).toLocaleDateString();
         
-                        li.innerHTML = `<a href="${article.link}" target="_blank" rel="noopener noreferrer">${article.title}</a>
+                        link.innerHTML = `<a href="${article.link}" target="_blank" rel="noopener noreferrer">${article.title}</a>
                         <span class="news-date">${date}</span>`;
-                        list.appendChild(li);
+                        list.appendChild(link);
                     });
                 }).catch(error => {
                     document.getElementById('news-list').innerHTML = 'Unable to load stock news.';
