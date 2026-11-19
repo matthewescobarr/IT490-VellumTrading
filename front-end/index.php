@@ -44,8 +44,8 @@ require_once 'authCheck.php';
                 <ul id="news-list">Loading news...</ul>
             </div>
             <script>
-                const rssUrl = 'https://cnbc.com';
-                const apiUrl = `https://rss2json.com{encodeURIComponent(rssUrl)}`;
+                const rssUrl = 'https://www.cnbc.com/id/15839069/device/rss/rss.html';
+                const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
 
                 fetch(apiUrl).then(response => response.json()).then(data => {
                     const list = document.getElementById('news-list');
