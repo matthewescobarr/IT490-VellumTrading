@@ -38,6 +38,10 @@ function alpacaRequest($symbol, $path, $parameters = [])
     // sends the request to alpaca 
     $body = curl_exec($ch);
     $httpStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    // making it so that the request is logged every time a request is made, successful or not
+    error_log("[DMZ] Alpaca request: $symbol | Endpoint: $path | HTTP Status: $httpStatus");
+
     curl_close($ch);
     // converts the Alpaca response and if not then it will return an empty string
     $data = json_decode($body ?: '', true);
